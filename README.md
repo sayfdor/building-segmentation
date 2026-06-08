@@ -72,7 +72,7 @@ python -m scripts.evaluate --config configs/... --checkpoint checkpoints/...
 ```bash
 python -m scripts.visualize --mode predict --config configs/... --checkpoint checkpoints/...
 python -m scripts.visualize --mode pipeline --config configs/... --checkpoint checkpoints/...
-python -m scripts.visualize --mode fulltile --config configs/... --checkpoint checkpoints/... --tile data/inria/train/images/austin1.tif --gt data/inria/train/gt/austin1.tif
+python -m scripts.visualize --mode fulltile --config configs/... --checkpoint checkpoints/... --tile data/inria/train/images/... --gt data/inria/train/gt/...
 ```
 
 **GeoJSON export**
@@ -89,7 +89,7 @@ docker run --rm building-seg-smoke
 
 # full GPU image (Linux + nvidia-container-toolkit)
 docker compose build
-docker compose run --rm building-seg python train.py --config configs/phase2_segformer_mitb5.yaml
+docker compose run --rm building-seg python train.py --config configs/...
 ```
 
 ## Streamlit demo
