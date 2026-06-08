@@ -1,0 +1,17 @@
+data/
+checkpoints/
+submission/
+predictions/
+pipeline_outputs/
+vectors/
+*.pth
+
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+.idea/
+.DS_Store
+
+*.log

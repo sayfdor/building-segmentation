@@ -1,0 +1,19 @@
+services:
+  building-seg:
+    build: .
+    image: building-seg
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - ./data:/app/data
+      - ./checkpoints:/app/checkpoints
+      - ./predictions:/app/predictions
+      - ./vectors:/app/vectors
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - PYTHONUNBUFFERED=1

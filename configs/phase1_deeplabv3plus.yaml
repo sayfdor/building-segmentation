@@ -1,0 +1,22 @@
+experiment_name: "phase1_deeplabv3plus_resnet34"
+device: "cuda"
+
+model:
+  architecture: "DeepLabV3Plus"
+  encoder_name: "resnet34"
+  encoder_weights: "imagenet"
+
+dataset:
+  name: "inria"
+  image_dir: "data/inria/train/images"
+  gt_dir: "data/inria/train/gt"
+  patch_size: 512
+  stride: 430
+  val_size: 0.2
+
+training:
+  batch_size: 8
+  epochs: 20
+  lr: 0.0002
+  weight_decay: 0.01
+  mixed_precision: true

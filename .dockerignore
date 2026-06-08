@@ -1,0 +1,10 @@
+data/
+checkpoints/
+predictions/
+vectors/
+*.pth
+
+__pycache__/
+*.pyc
+
+.idea/

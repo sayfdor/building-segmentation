@@ -1,0 +1,22 @@
+experiment_name: "phase2_segformer_mitb5"
+device: "cuda"
+
+model:
+  architecture: "Segformer"
+  encoder_name: "mit_b5"
+  encoder_weights: "imagenet"
+
+dataset:
+  name: "inria"
+  image_dir: "data/inria/train/images"
+  gt_dir: "data/inria/train/gt"
+  patch_size: 512
+  stride: 430
+  val_size: 0.2
+
+training:
+  batch_size: 4
+  epochs: 40
+  lr: 0.0001
+  weight_decay: 0.01
+  mixed_precision: true
