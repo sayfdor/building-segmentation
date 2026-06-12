@@ -60,10 +60,27 @@ _, config_path, checkpoint_path, cfg = experiments[choice]
 
 st.sidebar.divider()
 st.sidebar.header("Inference")
-threshold = st.sidebar.slider("Threshold", 0.1, 0.9, 0.5, 0.05)
-tta = st.sidebar.checkbox("TTA (slower, more accurate)", value=False)
-show_pipeline = st.sidebar.checkbox("Show postprocessing steps", value=False)
-show_vertices = st.sidebar.checkbox("Show polygon vertices", value=False)
+
+threshold = st.sidebar.slider("Threshold", 0.1, 0.9, 0.5, 0.05,
+                              help="Probability cutoff for binary mask. Higher = stricter (fewer false positives).")
+
+tta = st.sidebar.checkbox("TTA (slower, more accurate)", value=False,
+                          help="Averages predictions over 4 rotations and 2 flips.")
+
+show_pipeline = st.sidebar.checkbox("Show postprocessing steps", value=False,
+                                    help="Shows morphology cleanup and polygon extraction steps.")
+
+show_vertices = st.sidebar.checkbox("Show polygon vertices", value=False,
+                                    help="Marks each polygon vertex with a red dot on the overlay.")
+
+min_area = st.sidebar.slider("Min building area (px)", 10, 200, 40, 5,
+                             help="Contours smaller than this are discarded as noise.")
+
+simplify_frac = st.sidebar.slider("Simplify (Douglas-Peucker)", 0.001, 0.03, 0.005, 0.001, format="%.3f",
+                                  help="How aggressively to simplify polygon shape. Higher = fewer vertices.")
+
+denoise_px = st.sidebar.slider("Denoise (px)", 0.0, 5.0, 3.0, 0.5,
+                               help="Removes pixel-staircase noise on straight edges before shape simplification.")
 
 
 @st.cache_resource(show_spinner="Loading model...")
@@ -104,8 +121,10 @@ conf_rgb = (cm.jet(prob)[:, :, :3] * 255).astype(np.uint8)
 
 
 if show_pipeline:
-    morph, approx = postprocess_pipeline(binary)
-    polys = extract_building_polygons(approx, min_area=40)
+    morph, approx, polys = postprocess_pipeline(binary,
+                                                min_area=min_area,
+                                                simplify_frac=simplify_frac,
+                                                denoise_px=denoise_px)
     overlay = img_rgb.copy()
     green = np.zeros_like(img_rgb)
     for poly, _ in polys:

@@ -113,8 +113,7 @@ def run_pipeline(args, cfg, device, model):
         prob = predict_patch_probs(model, img_t.unsqueeze(0).to(device), args.tta)
         raw = (prob.squeeze().cpu().numpy() > args.threshold).astype(np.uint8)
 
-        morph, approx = postprocess_pipeline(raw)
-        polys = extract_building_polygons(morph, min_area=40, simplify_frac=0.005)
+        morph, approx, polys = postprocess_pipeline(raw)
 
         vertex_counts = [len(p) for p, _ in polys]
         print(f"  patch {i}: {len(polys)} buildings, nodes per polygon: {vertex_counts}")

@@ -52,8 +52,8 @@ def regularize_buildings(binary_mask, min_area=40, simplify_frac=0.02):
     return polygons_to_mask(polys, binary_mask.shape)
 
 
-def postprocess_pipeline(raw_binary, kernel_size=3, min_area=40, simplify_frac=0.005):
+def postprocess_pipeline(raw_binary, kernel_size=3, min_area=40, simplify_frac=0.005, denoise_px=3):
     morph = apply_morphology(raw_binary, kernel_size=kernel_size)
-    polys = extract_building_polygons(morph, min_area=min_area, simplify_frac=simplify_frac)
+    polys = extract_building_polygons(morph, min_area=min_area, simplify_frac=simplify_frac, denoise_px=denoise_px)
     approx = polygons_to_mask(polys, morph.shape)
-    return morph, approx
+    return morph, approx, polys
