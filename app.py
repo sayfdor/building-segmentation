@@ -63,6 +63,7 @@ st.sidebar.header("Inference")
 threshold = st.sidebar.slider("Threshold", 0.1, 0.9, 0.5, 0.05)
 tta = st.sidebar.checkbox("TTA (slower, more accurate)", value=False)
 show_pipeline = st.sidebar.checkbox("Show postprocessing steps", value=False)
+show_vertices = st.sidebar.checkbox("Show polygon vertices", value=False)
 
 
 @st.cache_resource(show_spinner="Loading model...")
@@ -111,18 +112,23 @@ if show_pipeline:
         cv2.fillPoly(green, [poly.astype(np.int32)], (0, 255, 0))
     cv2.addWeighted(green, 0.4, overlay, 1.0, 0, overlay)
 
+    if show_vertices:
+        for poly, _ in polys:
+            for x, y in poly:
+                cv2.circle(overlay, (int(x), int(y)), 3, (255, 0, 0), -1)
+
     cols = st.columns(5)
-    cols[0].image(img_rgb,  caption="Image",           use_container_width=True)
-    cols[1].image(conf_rgb, caption="Confidence",      use_container_width=True)
-    cols[2].image(binary,   caption="Raw mask",        use_container_width=True)
-    cols[3].image(morph,    caption="Morphology",      use_container_width=True)
-    cols[4].image(overlay,  caption="Douglas-Peucker", use_container_width=True)
+    cols[0].image(img_rgb, caption="Image", use_container_width=True)
+    cols[1].image(conf_rgb, caption="Confidence", use_container_width=True)
+    cols[2].image(binary, caption="Raw mask", use_container_width=True)
+    cols[3].image(morph, caption="Morphology", use_container_width=True)
+    cols[4].image(overlay, caption="Douglas-Peucker", use_container_width=True)
 else:
     polys = extract_building_polygons(binary, min_area=40)
-    cols  = st.columns(3)
-    cols[0].image(img_rgb,  caption="Image",                       use_container_width=True)
+    cols = st.columns(3)
+    cols[0].image(img_rgb, caption="Image", use_container_width=True)
     cols[1].image(conf_rgb, caption=f"Confidence (t={threshold})", use_container_width=True)
-    cols[2].image(binary,   caption="Predicted mask",              use_container_width=True)
+    cols[2].image(binary, caption="Predicted mask",  use_container_width=True)
 
 
 st.caption(f"Buildings detected: {len(polys)}")
