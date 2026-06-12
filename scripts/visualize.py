@@ -111,8 +111,14 @@ def run_pipeline(args, cfg, device, model):
     for i, idx in enumerate(sample_indices(len(val), args.num_samples, seed=123), 1):
         img_t, _ = val[idx]
         prob = predict_patch_probs(model, img_t.unsqueeze(0).to(device), args.tta)
-        raw  = (prob.squeeze().cpu().numpy() > args.threshold).astype(np.uint8)
+        raw = (prob.squeeze().cpu().numpy() > args.threshold).astype(np.uint8)
+
         morph, approx = postprocess_pipeline(raw)
+        polys = extract_building_polygons(morph, min_area=40, simplify_frac=0.005)
+
+        vertex_counts = [len(p) for p, _ in polys]
+        print(f"  patch {i}: {len(polys)} buildings, nodes per polygon: {vertex_counts}")
+
         orig = denormalize(img_t)
 
         overlay = orig.copy()
@@ -121,11 +127,23 @@ def run_pipeline(args, cfg, device, model):
         cv2.addWeighted(green, 0.4, overlay, 1.0, 0, overlay)
 
         fig, axes = plt.subplots(1, 5, figsize=(25, 5))
-        axes[0].imshow(orig);    axes[0].set_title("Image",        fontweight="bold")
-        axes[1].imshow(raw,   cmap="gray"); axes[1].set_title("Raw mask")
-        axes[2].imshow(morph, cmap="gray"); axes[2].set_title("Morphology")
-        axes[3].imshow(approx,cmap="gray"); axes[3].set_title("Douglas-Peucker")
-        axes[4].imshow(overlay);            axes[4].set_title("Overlay", fontweight="bold")
+        axes[0].imshow(orig)
+        axes[0].set_title("Image",        fontweight="bold")
+
+        axes[1].imshow(raw, cmap="gray")
+        axes[1].set_title("Raw mask")
+
+        axes[2].imshow(morph, cmap="gray")
+        axes[2].set_title("Morphology")
+
+        axes[3].imshow(approx, cmap="gray")
+        axes[3].set_title("Douglas-Peucker")
+        for poly, _ in polys:
+            axes[3].scatter(poly[:, 0], poly[:, 1], s=5, c="red", zorder=3)
+
+        axes[4].imshow(overlay)
+        axes[4].set_title("Overlay", fontweight="bold")
+
         for a in axes:
             a.axis("off")
         plt.tight_layout()
@@ -155,14 +173,14 @@ def run_fulltile(args, cfg, device, model):
     prob = infer_full_tile(model, img_bgr, patch, args.overlap, device,
                              batch_size=args.batch_size, tta=args.tta)
     binary = (prob > args.threshold).astype(np.uint8) * 255
-    polys = extract_building_polygons(binary, min_area=40, simplify_frac=0.01)
+    polys = extract_building_polygons(binary, min_area=40, simplify_frac=0.005)
 
     orig_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
     overlay = orig_rgb.copy()
     green = np.zeros_like(orig_rgb)
     for poly, _ in polys:
         cv2.fillPoly(green, [poly.astype(np.int32)], (0, 255, 0))
-    cv2.addWeighted(green, 0.6, overlay, 1.0, 0, overlay)
+    cv2.addWeighted(green, 0.4, overlay, 1.0, 0, overlay)
 
     stem = os.path.splitext(os.path.basename(args.tile))[0]
     cv2.imwrite(os.path.join(args.out_dir, f"{stem}_mask.png"), binary)

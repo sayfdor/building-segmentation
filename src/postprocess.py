@@ -22,7 +22,7 @@ def apply_morphology(mask, kernel_size=3, close_iter=2, open_iter=1):
     return opened
 
 
-def extract_building_polygons(binary_mask, min_area=40, simplify_frac=0.01):
+def extract_building_polygons(binary_mask, min_area=40, simplify_frac=0.005, denoise_px=3):
     mask_u8 = (binary_mask > 0).astype(np.uint8)
     contours, _ = cv2.findContours(mask_u8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -31,10 +31,11 @@ def extract_building_polygons(binary_mask, min_area=40, simplify_frac=0.01):
         area = cv2.contourArea(cnt)
         if area < min_area:
             continue
-        peri = cv2.arcLength(cnt, True)
-        approx = cv2.approxPolyDP(cnt, simplify_frac * peri, True)
+        denoised = cv2.approxPolyDP(cnt, denoise_px, True)
+        peri = cv2.arcLength(denoised, True)
+        approx = cv2.approxPolyDP(denoised, simplify_frac * peri, True)
         if len(approx) < 3:
-            continue  # вырожденный контур — не полигон
+            continue
         polygons.append((approx.reshape(-1, 2), float(area)))
     return polygons
 
@@ -51,7 +52,7 @@ def regularize_buildings(binary_mask, min_area=40, simplify_frac=0.02):
     return polygons_to_mask(polys, binary_mask.shape)
 
 
-def postprocess_pipeline(raw_binary, kernel_size=3, min_area=10, simplify_frac=0.01):
+def postprocess_pipeline(raw_binary, kernel_size=3, min_area=40, simplify_frac=0.005):
     morph = apply_morphology(raw_binary, kernel_size=kernel_size)
     polys = extract_building_polygons(morph, min_area=min_area, simplify_frac=simplify_frac)
     approx = polygons_to_mask(polys, morph.shape)
