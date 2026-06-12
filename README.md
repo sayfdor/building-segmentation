@@ -1,7 +1,7 @@
 # Building Segmentation
 
 Binary building footprint extraction from high-resolution aerial imagery.
-Trained on the [Inria Aerial Image Labeling](`https://project.inria.fr/aerialimagelabeling/`) dataset.
+Trained on the [Inria Aerial Image Labeling](https://project.inria.fr/aerialimagelabeling/) dataset.
 
 ## EDA
 
