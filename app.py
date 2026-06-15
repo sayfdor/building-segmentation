@@ -5,6 +5,8 @@ Usage:
     streamlit run app.py
 """
 import io
+import json
+import time
 import cv2
 import numpy as np
 import torch
@@ -16,6 +18,7 @@ from PIL import Image
 
 from src.inference import build_model, infer_full_tile
 from src.postprocess import postprocess_pipeline, extract_building_polygons
+from scripts.vectorize_to_geojson import read_geotransform, build_geojson
 
 st.set_page_config(page_title="Building Segmentation", layout="wide")
 st.title("Building Segmentation")
@@ -111,10 +114,21 @@ img_bgr = img_rgb[:, :, ::-1].copy()
 h, w = img_bgr.shape[:2]
 st.caption(f"{w}×{h} px")
 
+transform_fn, crs = None, None
+if uploaded.name.lower().endswith((".tif", ".tiff")):
+    transform_fn, crs = read_geotransform(io.BytesIO(uploaded.getvalue()))
+
+run = st.button("Run model")
+
+if not run:
+    st.stop()
+
 with st.spinner("Running inference..."):
     patch = cfg["dataset"]["patch_size"]
+    start_time = time.time()
     prob = infer_full_tile(model, img_bgr, patch, overlap=128,
                              device=device, batch_size=4, tta=tta)
+    elapsed = time.time() - start_time
     binary = (prob > threshold).astype(np.uint8) * 255
 
 conf_rgb = (cm.jet(prob)[:, :, :3] * 255).astype(np.uint8)
@@ -150,8 +164,18 @@ else:
     cols[2].image(binary, caption="Predicted mask",  use_container_width=True)
 
 
-st.caption(f"Buildings detected: {len(polys)}")
+st.caption(f"Inference time: {elapsed:.2f}s | Buildings detected: {len(polys)}")
 
 buf = io.BytesIO()
 Image.fromarray(binary).save(buf, format="PNG")
 st.download_button("Download mask", buf.getvalue(), "mask.png", "image/png")
+
+geojson_fc, wgs84 = build_geojson(polys, transform_fn, crs, uploaded.name)
+crs_label = "WGS84" if wgs84 else (f"UTM EPSG:{crs}" if transform_fn else "pixel coordinates")
+st.download_button(
+    "Download GeoJSON",
+    json.dumps(geojson_fc),
+    "buildings.geojson",
+    "application/geo+json",
+)
+st.caption(f"GeoJSON coordinates: {crs_label}")
