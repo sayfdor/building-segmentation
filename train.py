@@ -64,7 +64,7 @@ def main():
         full_train_ds.patches, test_size=cfg["dataset"]["val_size"]
     )
     train_dataset = Subset(full_train_ds, train_idx)
-    val_dataset   = Subset(full_val_ds,   val_idx)
+    val_dataset = Subset(full_val_ds,   val_idx)
 
     print(f"train patches : {len(train_dataset)}")
     print(f"val patches   : {len(val_dataset)}")
@@ -90,12 +90,12 @@ def main():
                       lr=cfg["training"]["lr"],
                       weight_decay=cfg["training"]["weight_decay"])
     scheduler = CosineAnnealingLR(optimizer, T_max=cfg["training"]["epochs"])
-    scaler    = GradScaler(enabled=cfg["training"]["mixed_precision"])
+    scaler = GradScaler(enabled=cfg["training"]["mixed_precision"])
 
-    start_epoch  = 1
+    start_epoch = 1
     best_val_iou = 0.0
     train_losses = []
-    val_ious     = []
+    val_ious = []
 
     if args.resume:
         if os.path.isfile(args.resume):
@@ -103,10 +103,10 @@ def main():
             ckpt = torch.load(args.resume, map_location=device)
             model.load_state_dict(ckpt["model_state_dict"])
             optimizer.load_state_dict(ckpt["optimizer_state_dict"])
-            start_epoch  = ckpt["epoch"] + 1
+            start_epoch = ckpt["epoch"] + 1
             best_val_iou = ckpt.get("best_val_iou", 0.0)
             train_losses = ckpt.get("train_losses", [])
-            val_ious     = ckpt.get("val_ious", [])
+            val_ious = ckpt.get("val_ious", [])
             if "scheduler_state_dict" in ckpt:
                 scheduler.load_state_dict(ckpt["scheduler_state_dict"])
             else:
@@ -142,7 +142,7 @@ def main():
                 imgs, masks = imgs.to(device), masks.to(device)
                 val_iou += calculate_iou(model(imgs), masks)
 
-        avg_iou  = val_iou / len(val_loader)
+        avg_iou = val_iou / len(val_loader)
         avg_loss = total_loss / len(train_loader)
         train_losses.append(avg_loss)
         val_ious.append(avg_iou)
@@ -172,10 +172,16 @@ def main():
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
     ax1.plot(epochs_range, train_losses, color="red",  marker="o", label="Train loss")
-    ax1.set_title("Loss"); ax1.set_xlabel("Epoch"); ax1.grid(True); ax1.legend()
+    ax1.set_title("Loss")
+    ax1.set_xlabel("Epoch")
+    ax1.grid(True)
+    ax1.legend()
 
     ax2.plot(epochs_range, val_ious, color="blue", marker="s", label="Val IoU")
-    ax2.set_title("IoU");  ax2.set_xlabel("Epoch"); ax2.grid(True); ax2.legend()
+    ax2.set_title("IoU")
+    ax2.set_xlabel("Epoch")
+    ax2.grid(True)
+    ax2.legend()
 
     plot_path = f"checkpoints/{cfg['experiment_name']}_metrics_plot.png"
     plt.tight_layout()
